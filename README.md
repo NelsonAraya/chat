@@ -36,16 +36,50 @@ No necesitas configurar nada. La IP se detecta automáticamente.
 2. Desde **cualquier PC de la red** abre el navegador y ve a esa dirección:
 
    ```
-   http://192.168.1.51:3000
+   http://<IP-DEL-SERVIDOR>:3000
    ```
+
+   Ejemplo: `http://192.168.1.51:3000`
 
 3. El servidor **redirige automáticamente a HTTPS** para que la grabación de audio funcione.
 
-4. La **primera vez** verás la advertencia del navegador:
-   - **Chrome/Edge:** clic en **Avanzado → Ir a 192.168.1.51 (no seguro)**
-   - **Firefox:** clic en **Avanzado → Aceptar riesgo y continuar**
+## Instalar certificado de seguridad
 
-   Esto se ve **solo la primera vez por PC**. Después el navegador lo recuerda.
+Para eliminar la advertencia **"No es seguro"** del navegador (Chrome/Edge) y que aparezca un candado verde:
+
+1. Abre `https://<IP-DEL-SERVIDOR>:3443` en el navegador.
+   - Ejemplo: `https://192.168.1.51:3443`
+   - La primera vez verás **"Su conexión no es privada"**
+   - Haz clic en: **Avanzado → Ir a `<IP>` (sitio no seguro)**
+
+2. En la pantalla de login verás un banner verde con **"Descargar certificado"**.
+
+3. Haz clic en **Descargar certificado** → se descarga `Chat-CORMUDESI-cert.cer`.
+
+4. Abre el archivo descargado y haz clic en **"Instalar certificado"**.
+
+5. Sigue estos pasos:
+   - **Máquina local** → **Siguiente**
+   - **Colocar todos los certificados en el siguiente almacén** → **Examinar**
+   - Selecciona **"Entidades de certificación raíz de confianza"** → **Aceptar**
+   - **Siguiente** → **Finalizar**
+   - Haz clic en **"Sí"** en el mensaje de seguridad
+
+6. Vuelve a cargar la página `https://<IP-DEL-SERVIDOR>:3443`.
+   - La advertencia ya no aparecerá.
+   - El candado se mostrará como seguro.
+
+> **Nota:** Si el servidor cambia de IP (ej: se conecta en otra red), el certificado se regenera automáticamente. Deberás descargar e instalar el nuevo certificado en cada PC cliente.
+
+## Grabación de audio
+
+La grabación de audio (micrófono) funciona solo en **HTTPS**. El servidor redirige automáticamente:
+
+```
+http://<IP-DEL-SERVIDOR>:3000  →  https://<IP-DEL-SERVIDOR>:3443
+```
+
+Solo presiona el botón 🎤 en el área de mensajes para grabar.
 
 ## Primer uso
 
@@ -61,12 +95,8 @@ Cambia la contraseña del admin después del primer ingreso.
 Si los puertos default (3000 y 3443) están ocupados, puedes cambiarlos:
 
 ```bash
-HTTP_PORT=3000 HTTPS_PORT=3443 npm start
+HTTP_PORT=3001 HTTPS_PORT=3444 npm start
 ```
-
-## Archivos que se modifican al cambiar de red
-
-**Ninguno.** La IP se detecta automáticamente con el sistema. Solo clonas, instalas e inicias.
 
 ## Firewall
 
@@ -88,8 +118,8 @@ Windows + R → "wf.msc" → Reglas de entrada → Nueva regla → Puerto
 ## Persistencia de datos
 
 - Los mensajes, usuarios y salas se guardan en `chat-data.json`
-- Los archivos adjuntos se guardan en la carpeta `uploads/`
-- El certificado SSL se guarda en `certs/` (se genera solo la primera vez)
+- Los archivos adjuntos se guardan en `uploads/`
+- El certificado SSL se guarda en `certs/` (se genera automáticamente al iniciar con la IP actual)
 - Si eliminas `chat-data.json` se regenera automáticamente al reiniciar
 
 ## Estructura del proyecto
@@ -100,7 +130,7 @@ chat-cormudesi/
 ├── db.js                 # Persistencia JSON + hash de contraseñas
 ├── socket-handler.js     # Eventos de Socket.IO
 ├── package.json
-├── certs/                # Certificado SSL (se genera solo)
+├── certs/                # Certificado SSL (se genera al iniciar con la IP actual)
 ├── uploads/              # Archivos adjuntos (se crea al iniciar)
 ├── public/
 │   ├── index.html        # Interfaz de usuario

@@ -10,6 +10,24 @@
 </head>
 <body>
   <div id="login-screen">
+    <div id="cert-banner" class="cert-banner hidden">
+      <div class="cert-banner-content">
+        <div class="cert-banner-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="cert-banner-text">
+          <strong>🔒 Sitio seguro</strong>
+          <span>Para que el navegador confíe en este sitio sin advertencias, descarga e instala el certificado de seguridad de la red.</span>
+        </div>
+        <a id="cert-download-btn" class="cert-btn" href="/api/cert" download>
+          <i class="fas fa-download"></i> Descargar certificado
+        </a>
+        <button id="cert-instruct-btn" class="cert-btn cert-btn-secondary" title="Instrucciones">
+          <i class="fas fa-question-circle"></i>
+        </button>
+        <button id="cert-dismiss-btn" class="cert-btn cert-btn-dismiss">
+          <i class="fas fa-check-circle"></i> Ya instalé el certificado
+        </button>
+      </div>
+    </div>
     <div class="login-card">
       <div class="login-logo">
         <img src="img/logo.png" alt="Cormudesi" class="login-logo-img" />
@@ -51,6 +69,34 @@
         </button>
       </div>
       <p id="login-error" class="login-error"></p>
+    </div>
+  </div>
+
+  <div id="cert-modal-overlay" class="hidden">
+    <div id="cert-modal" class="modal-box" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-shield-alt"></i> Instalar certificado de seguridad</h3>
+        <button id="cert-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" style="font-size: 14px; line-height: 1.6;">
+        <p style="margin-bottom: 16px;">Sigue estos pasos para que el navegador confíe en este sitio sin mostrar advertencias de seguridad:</p>
+        <ol style="margin-left: 20px; margin-bottom: 16px;">
+          <li style="margin-bottom: 8px;">Haz clic en <strong>"Descargar certificado"</strong> (botón verde de arriba).</li>
+          <li style="margin-bottom: 8px;">Abre el archivo descargado <strong>Chat-CORMUDESI-cert.cer</strong>.</li>
+          <li style="margin-bottom: 8px;">Haz clic en <strong>"Instalar certificado"</strong>.</li>
+          <li style="margin-bottom: 8px;">Elige: <strong>"Máquina local"</strong> → <strong>Siguiente</strong>.</li>
+          <li style="margin-bottom: 8px;">Elige: <strong>"Colocar todos los certificados en el siguiente almacén"</strong> → <strong>Examinar</strong>.</li>
+          <li style="margin-bottom: 8px;">Selecciona: <strong>"Entidades de certificación raíz de confianza"</strong> → <strong>Aceptar</strong>.</li>
+          <li style="margin-bottom: 8px;">Haz clic en <strong>"Siguiente"</strong> → <strong>"Finalizar"</strong>.</li>
+          <li style="margin-bottom: 8px;">Verás un mensaje de seguridad → haz clic en <strong>"Sí"</strong>.</li>
+        </ol>
+        <p style="color: var(--color-success); font-weight: 600;">
+          <i class="fas fa-check-circle"></i> ¡Listo! Vuelve a cargar la página y la advertencia desaparecerá.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button id="cert-modal-ok" class="btn-primary"><i class="fas fa-check"></i> Entendido</button>
+      </div>
     </div>
   </div>
 

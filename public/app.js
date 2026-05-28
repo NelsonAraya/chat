@@ -1364,7 +1364,41 @@ socket.on('room-deleted', function(data) {
   }
 });
 
+// Certificado banner logic
+const certBanner = $('cert-banner');
+const certDismissBtn = $('cert-dismiss-btn');
+const certInstructBtn = $('cert-instruct-btn');
+const certModalOverlay = $('cert-modal-overlay');
+const certModalClose = $('cert-modal-close');
+const certModalOk = $('cert-modal-ok');
+
+function showCertBannerIfNeeded() {
+  if (location.protocol !== 'https:') return;
+  if (localStorage.getItem('cert_dismissed')) return;
+  certBanner.classList.remove('hidden');
+}
+
+certDismissBtn.addEventListener('click', function() {
+  certBanner.classList.add('hidden');
+  localStorage.setItem('cert_dismissed', '1');
+});
+
+certInstructBtn.addEventListener('click', function() {
+  certModalOverlay.classList.remove('hidden');
+});
+
+function closeCertModal() {
+  certModalOverlay.classList.add('hidden');
+}
+
+certModalClose.addEventListener('click', closeCertModal);
+certModalOk.addEventListener('click', closeCertModal);
+certModalOverlay.addEventListener('click', function(e) {
+  if (e.target === certModalOverlay) closeCertModal();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
+  showCertBannerIfNeeded();
   if (!tryAutoLogin()) {
     loginUsername.focus();
   }

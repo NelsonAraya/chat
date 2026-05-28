@@ -7,7 +7,7 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const multer = require('multer');
-const selfsigned = require('selfsigned');
+const forge = require('node-forge');
 
 const app = express();
 
@@ -41,6 +41,15 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
 app.use('/uploads', express.static(UPLOADS_DIR));
 
+app.get('/api/cert', (req, res) => {
+  const CERT_PATH = path.join(__dirname, 'certs', 'cert.pem');
+  if (fs.existsSync(CERT_PATH)) {
+    res.download(CERT_PATH, 'Chat-CORMUDESI-cert.cer');
+  } else {
+    res.status(404).json({ error: 'Certificado no disponible' });
+  }
+});
+
 const db = require('./db');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
@@ -58,27 +67,71 @@ const getLocalIP = () => {
   return 'localhost';
 };
 
-const start = async () => {
-  // Generar o cargar certificado autofirmado persistente
+const start = () => {
   const CERTS_DIR = path.join(__dirname, 'certs');
   const KEY_PATH = path.join(CERTS_DIR, 'key.pem');
   const CERT_PATH = path.join(CERTS_DIR, 'cert.pem');
+  const CERT_IP_PATH = path.join(CERTS_DIR, 'ip.txt');
+
+  const currentIP = getLocalIP();
+
+  let needsRegenerate = false;
+  if (fs.existsSync(KEY_PATH) && fs.existsSync(CERT_PATH)) {
+    const savedIP = fs.readFileSync(CERT_IP_PATH, 'utf8').trim();
+    needsRegenerate = savedIP !== currentIP;
+    if (needsRegenerate) {
+      console.log(`[HTTPS] IP cambió (${savedIP} → ${currentIP}), regenerando certificado...`);
+    }
+  } else {
+    needsRegenerate = true;
+  }
 
   let httpsOptions;
-  if (fs.existsSync(KEY_PATH) && fs.existsSync(CERT_PATH)) {
+  if (needsRegenerate) {
+    if (!fs.existsSync(CERTS_DIR)) {
+      fs.mkdirSync(CERTS_DIR, { recursive: true });
+    }
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(2048);
+    const cert = pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = Date.now().toString();
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
+    cert.setSubject([{ name: 'commonName', value: currentIP }]);
+    cert.setIssuer([{ name: 'commonName', value: currentIP }]);
+    cert.setExtensions([
+      {
+        name: 'basicConstraints',
+        cA: true
+      },
+      {
+        name: 'keyUsage',
+        keyCertSign: true,
+        digitalSignature: true,
+        keyEncipherment: true
+      },
+      {
+        name: 'extKeyUsage',
+        serverAuth: true
+      },
+      {
+        name: 'subjectAltName',
+        altNames: [{ type: 7, ip: currentIP }]
+      }
+    ]);
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+    fs.writeFileSync(KEY_PATH, pki.privateKeyToPem(keys.privateKey), 'utf8');
+    fs.writeFileSync(CERT_PATH, pki.certificateToPem(cert), 'utf8');
+    fs.writeFileSync(CERT_IP_PATH, currentIP, 'utf8');
+    httpsOptions = { key: pki.privateKeyToPem(keys.privateKey), cert: pki.certificateToPem(cert) };
+    console.log(`[HTTPS] Certificado generado para IP: ${currentIP}`);
+  } else {
     httpsOptions = {
       key: fs.readFileSync(KEY_PATH, 'utf8'),
       cert: fs.readFileSync(CERT_PATH, 'utf8'),
     };
-  } else {
-    if (!fs.existsSync(CERTS_DIR)) {
-      fs.mkdirSync(CERTS_DIR, { recursive: true });
-    }
-    const attrs = [{ name: 'commonName', value: 'Chat CORMUDESI' }];
-    const pems = await selfsigned.generate(attrs, { days: 365 * 5 });
-    fs.writeFileSync(KEY_PATH, pems.private, 'utf8');
-    fs.writeFileSync(CERT_PATH, pems.cert, 'utf8');
-    httpsOptions = { key: pems.private, cert: pems.cert };
   }
 
   // Servidor HTTPS: sirve la app + Socket.IO
@@ -117,7 +170,4 @@ const start = async () => {
   });
 };
 
-start().catch(err => {
-  console.error('Error al iniciar:', err);
-  process.exit(1);
-});
+start();
