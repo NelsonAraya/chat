@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Cormudesi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>" />
+</head>
+<body>
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="img/logo.png" alt="Cormudesi" class="login-logo-img" />
+        <h1>Chat Cormudesi</h1>
+        <p class="login-subtitle">Red interna de comunicación</p>
+      </div>
+      <div class="login-tabs">
+        <button class="login-tab active" data-form="login">Ingresar</button>
+        <button class="login-tab" data-form="register">Crear cuenta</button>
+      </div>
+      <div id="login-form" class="login-form-box">
+        <div class="input-group">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" id="login-username" placeholder="Usuario..." maxlength="30" />
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="login-password" placeholder="Contraseña..." />
+        </div>
+        <button id="login-btn" class="btn-primary">
+          <i class="fas fa-arrow-right"></i> Ingresar
+        </button>
+      </div>
+      <div id="register-form" class="login-form-box hidden">
+        <div class="input-group">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" id="register-username" placeholder="Usuario..." maxlength="30" />
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="register-password" placeholder="Contraseña..." />
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="register-confirm" placeholder="Confirmar contraseña..." />
+        </div>
+        <button id="register-btn" class="btn-primary">
+          <i class="fas fa-user-plus"></i> Crear cuenta
+        </button>
+      </div>
+      <p id="login-error" class="login-error"></p>
+    </div>
+  </div>
+
+  <div id="chat-screen" class="hidden">
+    <header id="chat-header">
+      <div class="header-left">
+        <div class="header-logo">
+          <i class="fas fa-comments"></i>
+          <span class="header-title">Chat Cormudesi</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="header-user" class="header-user">
+          <div id="header-avatar" class="avatar avatar-32 avatar-clickable"></div>
+          <span id="display-name" class="header-display-name"></span>
+          <button id="edit-name-btn" class="btn-icon header-edit-btn" title="Cambiar nombre">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button id="change-pwd-btn" class="btn-icon header-edit-btn" title="Cambiar contraseña">
+            <i class="fas fa-key"></i>
+          </button>
+          <input type="file" id="avatar-input" class="hidden" accept="image/png,image/jpeg,image/gif,image/webp" />
+        </div>
+        <button id="logout-btn" class="btn-icon" title="Salir">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </header>
+
+    <div id="main-container">
+      <aside id="sidebar-rooms">
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab active" data-panel="rooms">
+            <i class="fas fa-hashtag"></i> Salas
+          </button>
+          <button class="sidebar-tab" data-panel="conversations">
+            <i class="fas fa-envelope"></i> Privados
+            <span id="conv-total-badge" class="sb-badge hidden">0</span>
+          </button>
+        </div>
+        <div id="rooms-panel" class="sidebar-panel">
+          <div id="rooms-list"></div>
+          <div class="sidebar-footer">
+            <button id="create-room-btn" class="btn-secondary">
+              <i class="fas fa-plus"></i> Crear sala
+            </button>
+          </div>
+          <div class="sidebar-credit">
+            Desarrollado por Unidad de Informática - CORMUDESI
+          </div>
+        </div>
+        <div id="conversations-panel" class="sidebar-panel hidden">
+          <div id="conversations-list"></div>
+        </div>
+      </aside>
+
+      <main id="chat-main">
+        <div id="chat-topbar">
+          <div id="chat-context">
+            <i class="fas fa-hashtag" id="context-icon"></i>
+            <span id="context-name">general</span>
+            <span id="context-badge" class="context-badge hidden">Privado</span>
+          </div>
+          <button id="back-to-room-btn" class="btn-icon hidden" title="Volver a la sala">
+            <i class="fas fa-arrow-left"></i> Sala
+          </button>
+        </div>
+
+        <div id="messages-container">
+          <div id="messages-start">
+            <div class="welcome-msg">
+              <i class="fas fa-comment-dots"></i>
+              <p>Bienvenido a <strong>#<span id="welcome-room">general</span></strong></p>
+              <p class="welcome-sub">Comienza a escribir un mensaje</p>
+            </div>
+          </div>
+          <div id="messages-list"></div>
+        </div>
+
+        <div id="message-input-area">
+          <div id="emoji-picker" class="hidden">
+            <div class="emoji-grid" id="emoji-grid"></div>
+          </div>
+          <div id="private-indicator" class="hidden">
+            <i class="fas fa-lock"></i>
+            Enviando mensaje privado a <strong id="private-recipient-name"></strong>
+            <button id="cancel-private-btn" class="btn-icon">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="recording-indicator" class="hidden">
+            <span class="rec-dot"></span>
+            <span id="rec-timer">00:00</span>
+            <button id="rec-stop-btn" class="btn-icon" title="Detener">
+              <i class="fas fa-stop"></i>
+            </button>
+            <button id="rec-cancel-btn" class="btn-icon" title="Cancelar">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="reply-indicator" class="hidden">
+            <i class="fas fa-reply"></i>
+            Respondiendo a <strong id="reply-target-name"></strong>
+            <span id="reply-target-preview" class="reply-preview-text"></span>
+            <button id="cancel-reply-btn" class="btn-icon">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="input-row">
+            <button id="emoji-btn" class="input-action-btn" title="Emojis"><i class="far fa-smile"></i></button>
+            <button id="attach-btn" class="input-action-btn" title="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
+            <button id="mic-btn" class="input-action-btn" title="Grabar audio"><i class="fas fa-microphone"></i></button>
+            <input type="file" id="file-input" class="hidden" />
+            <input type="text" id="message-input" placeholder="Escribe un mensaje..." maxlength="1000" autofocus />
+            <button id="send-btn" class="btn-primary send-btn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+          <div id="file-preview" class="hidden">
+            <i class="fas fa-paperclip"></i>
+            <span id="file-preview-name"></span>
+            <span id="file-preview-size"></span>
+            <button id="file-preview-remove" class="btn-icon" title="Quitar archivo">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <aside id="sidebar-users">
+        <div class="sidebar-header">
+          <h3><i class="fas fa-users"></i> Conectados</h3>
+        </div>
+        <div class="sidebar-label">En este canal</div>
+        <div id="room-users-list"></div>
+        <div class="sidebar-label" style="margin-top: 8px;">En el sistema</div>
+        <div id="all-users-list"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="create-modal-overlay" class="hidden">
+    <div id="create-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus-circle"></i> Crear nueva sala</h3>
+        <button id="create-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <i class="fas fa-hashtag input-icon"></i>
+          <input type="text" id="create-modal-input" placeholder="nombre-de-la-sala" maxlength="30" />
+        </div>
+        <div class="input-group" style="margin-top: 12px;">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="create-modal-password" placeholder="Contraseña (opcional)" />
+        </div>
+        <label class="checkbox-label" style="margin-top: 12px;">
+          <input type="checkbox" id="create-modal-temporary" />
+          <i class="far fa-clock"></i> Sala temporal (se elimina al quedar vacía)
+        </label>
+        <p id="create-modal-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="create-modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="create-modal-confirm" class="btn-primary">
+          <i class="fas fa-check"></i> Crear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="password-modal-overlay" class="hidden">
+    <div id="password-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-lock"></i> Sala protegida</h3>
+        <button id="password-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px; color: var(--text-secondary);">
+          Ingresa la contraseña para <strong id="password-room-name" style="color:var(--text-primary);"></strong>
+        </p>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="password-modal-input" placeholder="Contraseña..." />
+        </div>
+        <p id="password-modal-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="password-modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="password-modal-confirm" class="btn-primary">
+          <i class="fas fa-unlock"></i> Entrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pwd-change-modal-overlay" class="hidden">
+    <div id="pwd-change-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-key"></i> Cambiar contraseña</h3>
+        <button id="pwd-change-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="pwd-change-current" placeholder="Contraseña actual..." />
+        </div>
+        <div class="input-group" style="margin-top:12px;">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="pwd-change-new" placeholder="Nueva contraseña..." />
+        </div>
+        <div class="input-group" style="margin-top:12px;">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="pwd-change-confirm" placeholder="Confirmar nueva contraseña..." />
+        </div>
+        <p id="pwd-change-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="pwd-change-cancel" class="btn-secondary">Cancelar</button>
+        <button id="pwd-change-confirm-btn" class="btn-primary">
+          <i class="fas fa-check"></i> Cambiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="name-modal-overlay" class="hidden">
+    <div id="name-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-edit"></i> Cambiar nombre</h3>
+        <button id="name-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <i class="fas fa-id-card input-icon"></i>
+          <input type="text" id="name-modal-input" placeholder="Nuevo nombre..." maxlength="40" />
+        </div>
+        <p id="name-modal-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="name-modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="name-modal-confirm" class="btn-primary">
+          <i class="fas fa-check"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="image-modal-overlay" class="hidden">
+    <button id="image-modal-close" class="btn-icon" title="Cerrar">
+      <i class="fas fa-times"></i>
+    </button>
+    <img id="image-modal-img" src="" alt="" />
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
