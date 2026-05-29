@@ -118,6 +118,9 @@
           <button id="change-pwd-btn" class="btn-icon header-edit-btn" title="Cambiar contraseña">
             <i class="fas fa-key"></i>
           </button>
+          <button id="edit-location-btn" class="btn-icon header-edit-btn" title="Asignar ubicación">
+            <i class="fas fa-map-marker-alt"></i>
+          </button>
           <input type="file" id="avatar-input" class="hidden" accept="image/png,image/jpeg,image/gif,image/webp" />
         </div>
         <button id="logout-btn" class="btn-icon" title="Salir">
@@ -140,7 +143,10 @@
         <div id="rooms-panel" class="sidebar-panel">
           <div id="rooms-list"></div>
           <div class="sidebar-footer">
-            <button id="create-room-btn" class="btn-secondary">
+            <button id="panic-btn" class="btn-danger sidebar-panic-btn">
+              <i class="fas fa-exclamation-triangle"></i> Botón Alerta
+            </button>
+            <button id="create-room-btn" class="btn-secondary" style="margin-top:8px;">
               <i class="fas fa-plus"></i> Crear sala
             </button>
           </div>
@@ -350,6 +356,58 @@
       <i class="fas fa-times"></i>
     </button>
     <img id="image-modal-img" src="" alt="" />
+  </div>
+
+  <div id="location-modal-overlay" class="hidden">
+    <div id="location-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-map-marker-alt"></i> Mi ubicación</h3>
+        <button id="location-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:12px;color:var(--text-secondary);font-size:14px;">
+          Indica tu ubicación actual para que se muestre en la alerta de pánico.
+        </p>
+        <div class="input-group">
+          <i class="fas fa-map-pin input-icon"></i>
+          <input type="text" id="location-modal-input" placeholder="Ej: Oficina 302, Edificio Central..." maxlength="100" />
+        </div>
+        <p id="location-modal-status" style="margin-top:8px;font-size:13px;color:var(--text-muted);"></p>
+        <p id="location-modal-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="location-modal-clear" class="btn-secondary">
+          <i class="fas fa-trash"></i> Limpiar
+        </button>
+        <button id="location-modal-confirm" class="btn-primary">
+          <i class="fas fa-check"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="panic-modal-overlay" class="hidden">
+    <div id="panic-modal" class="modal-box panic-modal">
+      <div class="modal-header panic-modal-header">
+        <h3><i class="fas fa-exclamation-triangle"></i> ¡ALERTA!</h3>
+        <button id="panic-modal-close" class="btn-icon" style="color:white;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body panic-modal-body">
+        <div class="panic-icon-container">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <p id="panic-modal-message" class="panic-message"></p>
+        <p id="panic-modal-location" class="panic-location"></p>
+        <p id="panic-modal-time" class="panic-timestamp"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="panic-modal-ok" class="btn-primary panic-btn-ok">
+          <i class="fas fa-check"></i> Entendido
+        </button>
+      </div>
+    </div>
   </div>
 
   <div id="toast-container"></div>

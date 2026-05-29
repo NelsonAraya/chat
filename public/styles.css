@@ -1320,7 +1320,8 @@ body {
 #create-modal-overlay,
 #password-modal-overlay,
 #pwd-change-modal-overlay,
-#name-modal-overlay {
+#name-modal-overlay,
+#location-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1338,7 +1339,8 @@ body {
 #create-modal-overlay.hidden,
 #password-modal-overlay.hidden,
 #pwd-change-modal-overlay.hidden,
-#name-modal-overlay.hidden {
+#name-modal-overlay.hidden,
+#location-modal-overlay.hidden {
   display: none;
 }
 
@@ -1673,6 +1675,118 @@ a.cert-btn:hover {
 }
 
 /* ===================== RESPONSIVE ===================== */
+
+/* ===================== PANIC BUTTON ===================== */
+
+.sidebar-panic-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-danger);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-panic-btn:hover {
+  background: #dc2626;
+}
+
+.sidebar-panic-btn:active {
+  transform: scale(0.98);
+}
+
+/* ===================== PANIC MODAL ===================== */
+
+#panic-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+#panic-modal-overlay.hidden {
+  display: none;
+}
+
+#panic-modal {
+  border: 3px solid var(--color-danger);
+  max-width: 420px;
+}
+
+.panic-modal-header {
+  background: var(--color-danger);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+.panic-modal-header h3 i {
+  color: white !important;
+}
+
+.panic-modal-body {
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.panic-icon-container {
+  font-size: 64px;
+  color: var(--color-danger);
+  margin-bottom: 16px;
+  animation: panicBounce 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes panicBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.panic-message {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.panic-timestamp {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.panic-location {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.panic-location strong {
+  color: var(--text-primary);
+}
+
+.panic-btn-ok {
+  background: var(--color-danger);
+}
+
+.panic-btn-ok:hover {
+  background: #dc2626;
+}
 
 @media (max-width: 768px) {
   #sidebar-rooms {

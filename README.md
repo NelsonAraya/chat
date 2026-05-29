@@ -115,30 +115,44 @@ Windows + R → "wf.msc" → Reglas de entrada → Nueva regla → Puerto
 | `npm run dev` | Inicia con reinicio automático al editar código |
 | `Ctrl + C` | Detiene el servidor |
 
+## Botón de Alerta
+
+El chat incluye un botón de alerta (pánico) en la barra lateral izquierda.
+
+- **Activarlo:** Haz clic en el botón rojo **Botón Alerta**
+- **Qué hace:** Todos los usuarios conectados reciben un modal + sonido indicando quién solicita asistencia y su ubicación
+- **Ubicación:** Haz clic en el ícono 📍 en el header para asignar tu ubicación actual (ej: "Oficina 302, Edificio Central")
+- Si no has configurado ubicación se mostrará como "Indeterminada"
+- El sonido de alerta se puede personalizar reemplazando `public/sounds/alerta.mp3`
+
 ## Persistencia de datos
 
-- Los mensajes, usuarios y salas se guardan en `chat-data.json`
+- Los usuarios y salas se guardan en `data.json` (permanente)
+- El historial de mensajes se guarda en `messages.json` (se puede borrar para limpiar el historial sin perder usuarios)
 - Los archivos adjuntos se guardan en `uploads/`
 - El certificado SSL se guarda en `certs/` (se genera automáticamente al iniciar con la IP actual)
-- Si eliminas `chat-data.json` se regenera automáticamente al reiniciar
+- Si eliminas `data.json` o `messages.json` se regeneran automáticamente al reiniciar
 
 ## Estructura del proyecto
 
 ```
 chat-cormudesi/
 ├── index.js              # Servidor (HTTP redirige a HTTPS)
-├── db.js                 # Persistencia JSON + hash de contraseñas
+├── db.js                 # Persistencia JSON separada + hash de contraseñas
 ├── socket-handler.js     # Eventos de Socket.IO
+├── data.json             # Usuarios y salas (permanente)
+├── messages.json         # Historial de mensajes (descartable)
 ├── package.json
 ├── certs/                # Certificado SSL (se genera al iniciar con la IP actual)
 ├── uploads/              # Archivos adjuntos (se crea al iniciar)
 ├── public/
+│   ├── sounds/
+│   │   └── alerta.mp3    # Sonido del botón de alerta
 │   ├── index.html        # Interfaz de usuario
 │   ├── styles.css        # Estilos
 │   ├── app.js            # Lógica del cliente
 │   └── img/
 │       └── logo.png      # Logo de CORMUDESI
-└── chat-data.json        # Base de datos JSON (se genera automáticamente)
 ```
 
 ## Licencia

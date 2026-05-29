@@ -3,6 +3,7 @@
 let currentUser = null;
 let currentDisplayName = null;
 let currentAvatar = null;
+let currentLocation = '';
 let currentRoom = null;
 let privateRecipient = null;
 let rooms = [];
@@ -110,6 +111,24 @@ const replyIndicator = $('reply-indicator');
 const replyTargetName = $('reply-target-name');
 const replyTargetPreview = $('reply-target-preview');
 const cancelReplyBtn = $('cancel-reply-btn');
+const panicBtn = $('panic-btn');
+const panicModalOverlay = $('panic-modal-overlay');
+const panicModalMessage = $('panic-modal-message');
+const panicModalTime = $('panic-modal-time');
+const panicModalOk = $('panic-modal-ok');
+const panicModalClose = $('panic-modal-close');
+const panicModalLocation = $('panic-modal-location');
+const editLocationBtn = $('edit-location-btn');
+const locationModalOverlay = $('location-modal-overlay');
+const locationModalInput = $('location-modal-input');
+const locationModalConfirm = $('location-modal-confirm');
+const locationModalClear = $('location-modal-clear');
+const locationModalClose = $('location-modal-close');
+const locationModalError = $('location-modal-error');
+const locationModalStatus = $('location-modal-status');
+
+var panicAudio = new Audio('/sounds/alerta.mp3');
+panicAudio.preload = 'auto';
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -426,6 +445,7 @@ function doLogin(username, password, callback) {
     currentUser = username.toLowerCase();
     currentDisplayName = res.displayName || username;
     currentAvatar = res.avatar || null;
+    currentLocation = res.location || '';
     rooms = res.rooms || [];
     loginScreen.classList.add('hidden');
     chatScreen.classList.remove('hidden');
@@ -456,6 +476,7 @@ function tryAutoLogin() {
       currentUser = savedUser;
       currentDisplayName = res.displayName || savedUser;
       currentAvatar = res.avatar || null;
+      currentLocation = res.location || '';
       rooms = res.rooms || [];
       loginScreen.classList.add('hidden');
       chatScreen.classList.remove('hidden');
@@ -658,6 +679,59 @@ logoutBtn.addEventListener('click', () => {
   location.reload();
 });
 
+panicBtn.addEventListener('click', function() {
+  socket.emit('panic-alert');
+});
+
+panicModalOk.addEventListener('click', closePanicModal);
+panicModalClose.addEventListener('click', closePanicModal);
+panicModalOverlay.addEventListener('click', function(e) {
+  if (e.target === panicModalOverlay) closePanicModal();
+});
+
+editLocationBtn.addEventListener('click', function() {
+  locationModalInput.value = currentLocation;
+  locationModalStatus.textContent = currentLocation ? 'Ubicación actual: ' + currentLocation : '';
+  locationModalError.textContent = '';
+  locationModalOverlay.classList.remove('hidden');
+  locationModalInput.focus();
+  locationModalInput.select();
+});
+
+locationModalConfirm.addEventListener('click', function() {
+  var loc = locationModalInput.value.trim();
+  if (loc.length > 100) { locationModalError.textContent = 'Máximo 100 caracteres'; return; }
+  locationModalConfirm.disabled = true;
+  locationModalConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  socket.emit('update-location', { location: loc }, function(res) {
+    locationModalConfirm.disabled = false;
+    locationModalConfirm.innerHTML = '<i class="fas fa-check"></i> Guardar';
+    if (!res.ok) { locationModalError.textContent = res.error; return; }
+    currentLocation = res.location;
+    locationModalOverlay.classList.add('hidden');
+    showToast('Ubicación actualizada');
+  });
+});
+
+locationModalClear.addEventListener('click', function() {
+  locationModalInput.value = '';
+  locationModalStatus.textContent = '';
+  locationModalInput.focus();
+});
+
+function closeLocationModal() {
+  locationModalOverlay.classList.add('hidden');
+}
+
+locationModalClose.addEventListener('click', closeLocationModal);
+locationModalOverlay.addEventListener('click', function(e) {
+  if (e.target === locationModalOverlay) closeLocationModal();
+});
+
+locationModalInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') locationModalConfirm.click();
+});
+
 function playNotification() {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -672,6 +746,27 @@ function playNotification() {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.3);
   } catch(e) {}
+}
+
+function playPanicSound() {
+  try {
+    panicAudio.currentTime = 0;
+    panicAudio.play();
+  } catch(e) {}
+}
+
+function showPanicModal(data) {
+  panicModalMessage.textContent = 'El usuario ' + (data.displayName || data.username) + ' está pidiendo asistencia';
+  var loc = data.location && data.location.trim() ? data.location : 'Indeterminada';
+  panicModalLocation.innerHTML = 'Ubicación: <strong>' + escapeHtml(loc) + '</strong>';
+  panicModalTime.textContent = formatTime(data.timestamp);
+  panicModalOverlay.classList.remove('hidden');
+}
+
+function closePanicModal() {
+  panicModalOverlay.classList.add('hidden');
+  panicAudio.pause();
+  panicAudio.currentTime = 0;
 }
 
 function loadConversations() {
@@ -1362,6 +1457,11 @@ socket.on('room-deleted', function(data) {
   } else {
     showToast('Sala #' + data.name + ' eliminada');
   }
+});
+
+socket.on('panic-alert', function(data) {
+  showPanicModal(data);
+  playPanicSound();
 });
 
 // Certificado banner logic

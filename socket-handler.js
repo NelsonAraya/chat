@@ -162,16 +162,18 @@ module.exports = (io, db) => {
         }
       }
 
-      users.set(socket.id, { username: name, currentRoom: null, displayName: userRecord.displayName || name, avatar: userRecord.avatar || null });
+      users.set(socket.id, { username: name, currentRoom: null, displayName: userRecord.displayName || name, avatar: userRecord.avatar || null, location: userRecord.location || '' });
       socket.username = name;
       socket.displayName = userRecord.displayName || name;
       socket.avatar = userRecord.avatar || null;
+      socket.location = userRecord.location || '';
       io.emit('all-users', { users: getAllUsers() });
       callback?.({
         ok: true,
         rooms: getAllRooms(),
         displayName: userRecord.displayName || name,
-        avatar: userRecord.avatar || null
+        avatar: userRecord.avatar || null,
+        location: userRecord.location || ''
       });
     });
 
@@ -480,6 +482,36 @@ module.exports = (io, db) => {
       const user = users.get(socket.id);
       if (!user) return;
       callback?.(getConversations(user.username));
+    });
+
+    socket.on('panic-alert', () => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      io.emit('panic-alert', {
+        username: user.username,
+        displayName: user.displayName || user.username,
+        location: user.location || '',
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    socket.on('update-location', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      const location = data_?.location?.trim() || '';
+      if (location.length > 100) {
+        return callback?.({ ok: false, error: 'Máximo 100 caracteres' });
+      }
+
+      user.location = location;
+      const record = data.users.find(u => u.username === user.username);
+      if (record) {
+        record.location = location || null;
+        save();
+      }
+      callback?.({ ok: true, location });
     });
 
     socket.on('get-private-history', (data_, callback) => {
