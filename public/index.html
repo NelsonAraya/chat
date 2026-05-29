@@ -167,12 +167,18 @@
   <div id="chat-screen" class="hidden">
     <header id="chat-header">
       <div class="header-left">
+        <button id="sidebar-toggle-btn" class="btn-icon mobile-only" title="Menú">
+          <i class="fas fa-bars"></i>
+        </button>
         <div class="header-logo">
           <i class="fas fa-comments"></i>
           <span class="header-title">Chat Cormudesi</span>
         </div>
       </div>
       <div class="header-right">
+        <button id="users-toggle-btn" class="btn-icon mobile-only" title="Usuarios conectados">
+          <i class="fas fa-users"></i>
+        </button>
         <div id="header-user" class="header-user">
           <div id="header-avatar" class="avatar avatar-32 avatar-clickable"></div>
           <span id="display-name" class="header-display-name"></span>
@@ -337,6 +343,7 @@
         <div id="all-users-list"></div>
       </aside>
     </div>
+    <div id="drawer-overlay" class="hidden"></div>
   </div>
 
   <div id="create-modal-overlay" class="hidden">

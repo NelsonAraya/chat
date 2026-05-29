@@ -52,6 +52,10 @@ body {
   display: none !important;
 }
 
+.mobile-only {
+  display: none !important;
+}
+
 /* ===================== LOGIN SCREEN ===================== */
 
 #login-screen {
@@ -2127,14 +2131,199 @@ a.cert-btn:hover {
   }
 }
 
-@media (max-width: 576px) {
-  #sidebar-users {
+/* ===================== RESPONSIVE ≤ 768px ===================== */
+
+@media (max-width: 768px) {
+  /* ---------- Mobile-only elements ---------- */
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
+  /* ---------- Header ---------- */
+  #chat-header {
+    padding: 0 12px;
+  }
+  .header-title,
+  .header-display-name,
+  .header-edit-btn {
+    display: none !important;
+  }
+  .header-user {
+    padding: 2px 6px 2px 2px;
+    gap: 4px;
+  }
+  .header-right {
+    gap: 4px;
+  }
+  #logout-btn {
+    font-size: 15px !important;
+    padding: 6px !important;
+  }
+  .header-logo i {
+    font-size: 20px;
+    padding: 6px;
+  }
+
+  /* ---------- Drawer overlay ---------- */
+  #drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 899;
     display: none;
   }
-  #sidebar-rooms {
-    width: 160px;
+  #drawer-overlay.hidden {
+    display: none !important;
   }
+  #drawer-overlay:not(.hidden) {
+    display: block;
+  }
+
+  /* ---------- Left drawer (#sidebar-rooms) ---------- */
+  #sidebar-rooms {
+    position: fixed;
+    top: var(--header-height);
+    left: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: calc(100vh - var(--header-height));
+    z-index: 900;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+    overflow-y: auto;
+  }
+  #sidebar-rooms.left-open {
+    left: 0;
+  }
+
+  /* ---------- Right drawer (#sidebar-users) ---------- */
+  #sidebar-users {
+    position: fixed;
+    top: var(--header-height);
+    right: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: calc(100vh - var(--header-height));
+    z-index: 900;
+    transition: right 0.25s ease;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.15);
+    overflow-y: auto;
+  }
+  #sidebar-users.right-open {
+    right: 0;
+  }
+  #room-users-list {
+    max-height: 30%;
+  }
+
+  /* ---------- Main layout ---------- */
+  #main-container {
+    width: 100%;
+  }
+  #chat-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ---------- Messages ---------- */
+  #messages-container {
+    padding: 12px;
+  }
+  .message {
+    max-width: 90%;
+  }
+  .message .msg-reply-btn {
+    opacity: 1;
+  }
+
+  /* ---------- Message input ---------- */
+  #message-input-area {
+    padding: 8px 12px 12px;
+  }
+  .input-action-btn {
+    font-size: 16px;
+    padding: 6px 8px;
+  }
+  .send-btn {
+    padding: 10px 14px;
+  }
+  #message-input {
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
+  /* ---------- Emoji picker ---------- */
+  .emoji-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  #emoji-picker {
+    left: 8px;
+    right: 8px;
+    max-height: 160px;
+  }
+
+  /* ---------- Modals ---------- */
+  .modal-box {
+    width: 95%;
+    max-width: none;
+  }
+  .modal-header {
+    padding: 16px 18px 0;
+  }
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  .modal-body {
+    padding: 16px 18px;
+  }
+  .modal-footer {
+    padding: 12px 18px;
+  }
+  .cert-modal-box {
+    max-width: none;
+  }
+  .cert-modal-body {
+    max-height: 70vh;
+    padding: 16px 18px;
+  }
+  .cert-step-img {
+    max-width: 100%;
+  }
+
+  /* ---------- Login ---------- */
   .login-card {
-    padding: 32px 24px;
+    padding: 24px 20px;
+  }
+  .login-logo-img {
+    width: 100px;
+  }
+  .login-logo h1 {
+    font-size: 20px;
+  }
+
+  /* ---------- Admin ---------- */
+  .admin-stats {
+    padding: 8px;
+    gap: 6px;
+  }
+  .admin-stat-value {
+    font-size: 18px;
+  }
+  .admin-user-item,
+  .admin-room-item {
+    padding: 6px 10px;
+  }
+
+  /* ---------- Toast ---------- */
+  #toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 12px;
+  }
+  .toast {
+    max-width: none;
   }
 }

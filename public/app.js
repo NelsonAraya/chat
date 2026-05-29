@@ -142,6 +142,9 @@ const replyIndicator = $('reply-indicator');
 const replyTargetName = $('reply-target-name');
 const replyTargetPreview = $('reply-target-preview');
 const cancelReplyBtn = $('cancel-reply-btn');
+const sidebarToggleBtn = $('sidebar-toggle-btn');
+const usersToggleBtn = $('users-toggle-btn');
+const drawerOverlay = $('drawer-overlay');
 const panicBtn = $('panic-btn');
 const panicModalOverlay = $('panic-modal-overlay');
 const panicModalMessage = $('panic-modal-message');
@@ -789,6 +792,39 @@ locationModalInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') locationModalConfirm.click();
 });
 
+// ===================== MOBILE DRAWERS =====================
+
+function closeDrawers() {
+  document.getElementById('sidebar-rooms').classList.remove('left-open');
+  document.getElementById('sidebar-users').classList.remove('right-open');
+  drawerOverlay.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+sidebarToggleBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+  var leftOpen = document.getElementById('sidebar-rooms').classList.toggle('left-open');
+  document.getElementById('sidebar-users').classList.remove('right-open');
+  drawerOverlay.classList.toggle('hidden', !leftOpen);
+  document.body.style.overflow = leftOpen ? 'hidden' : '';
+});
+
+usersToggleBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+  var rightOpen = document.getElementById('sidebar-users').classList.toggle('right-open');
+  document.getElementById('sidebar-rooms').classList.remove('left-open');
+  drawerOverlay.classList.toggle('hidden', !rightOpen);
+  document.body.style.overflow = rightOpen ? 'hidden' : '';
+});
+
+drawerOverlay.addEventListener('click', closeDrawers);
+
+function onActionCloseDrawers() {
+  if (window.innerWidth <= 768) closeDrawers();
+}
+
+// ===================== NOTIFICATIONS =====================
+
 function playNotification() {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1000,10 +1036,12 @@ function joinRoom(data) {
     renderMessages(res.history);
     messageInput.placeholder = 'Escribe en #' + name + '...';
     messageInput.focus();
+    onActionCloseDrawers();
   });
 }
 
 $('create-room-btn').addEventListener('click', function() {
+  onActionCloseDrawers();
   createModalOverlay.classList.remove('hidden');
   createModalInput.value = '';
   createModalPassword.value = '';
@@ -1545,6 +1583,7 @@ function openPrivateChat(username) {
   messageInput.focus();
 
   loadPrivateHistory(username);
+  onActionCloseDrawers();
 }
 
 function cancelPrivate() {
