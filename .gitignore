@@ -1,5 +1,8 @@
 node_modules/
 chat-data.json
+chat-data.json.bak
+data.json
+messages.json
 chat.db
 uploads/*
 !uploads/.gitkeep
