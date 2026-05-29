@@ -56,6 +56,11 @@ function load() {
 
   if (!Array.isArray(data.messages)) data.messages = [];
 
+  // Asegurar campo role en todos los usuarios
+  data.users.forEach(u => {
+    if (!u.role) u.role = 'user';
+  });
+
   // Asegurar sala general
   const general = data.rooms.find(r => r.name === 'general');
   if (!general) {
@@ -71,11 +76,16 @@ function load() {
     if (general.temporary === undefined) general.temporary = false;
   }
 
-  // Asegurar usuario admin
+  // Asegurar que admin tenga role admin
+  const adminUser = data.users.find(u => u.username === 'admin');
+  if (adminUser) adminUser.role = 'admin';
+
+  // Asegurar usuario admin por defecto si no hay usuarios
   if (data.users.length === 0) {
     data.users.push({
       username: 'admin',
       password: hashPassword('admin'),
+      role: 'admin',
       created_at: new Date().toISOString()
     });
   }

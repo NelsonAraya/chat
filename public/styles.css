@@ -650,6 +650,245 @@ body {
   font-weight: 500;
 }
 
+/* ===================== ROOM UNREAD BADGE ===================== */
+
+.room-item .room-badge {
+  background: var(--color-danger);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.room-item.unread {
+  background: var(--bg-hover);
+}
+
+/* ===================== ADMIN PANEL ===================== */
+
+#admin-panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.admin-user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-user-item:last-child {
+  border-bottom: none;
+}
+
+.admin-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-user-username {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.admin-user-role {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.admin-role-badge {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.admin-user-edit-btn {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.admin-user-edit-btn:hover {
+  color: var(--color-primary);
+}
+
+.admin-room-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-room-item:last-child {
+  border-bottom: none;
+}
+
+.admin-room-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-room-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-room-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+.admin-room-delete-btn {
+  font-size: 14px;
+  color: var(--color-danger);
+  flex-shrink: 0;
+}
+
+.admin-room-delete-btn:hover {
+  opacity: 0.7;
+}
+
+.admin-room-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.admin-room-lock-btn {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.admin-room-lock-btn:hover {
+  color: var(--color-warning);
+}
+
+/* Disabled checkbox for non-admin create-room */
+#create-modal-temporary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.create-modal-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===================== ADMIN STATS ===================== */
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+}
+
+.admin-stat-card {
+  background: var(--bg-input);
+  border-radius: var(--border-radius-sm);
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.admin-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+.admin-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ===================== ADMIN EDIT USER MODAL ===================== */
+
+.admin-edit-pwd-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-edit-delete-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-edit-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.admin-edit-section-label i {
+  margin-right: 4px;
+}
+
+.btn-danger {
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-danger);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-danger:active {
+  transform: scale(0.98);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ===================== SIDEBAR BADGE ===================== */
 
 .sb-badge {
@@ -1322,7 +1561,9 @@ body {
 #pwd-change-modal-overlay,
 #name-modal-overlay,
 #location-modal-overlay,
-#cert-modal-overlay {
+#cert-modal-overlay,
+#admin-edit-user-overlay,
+#admin-room-pwd-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1342,7 +1583,9 @@ body {
 #pwd-change-modal-overlay.hidden,
 #name-modal-overlay.hidden,
 #location-modal-overlay.hidden,
-#cert-modal-overlay.hidden {
+#cert-modal-overlay.hidden,
+#admin-edit-user-overlay.hidden,
+#admin-room-pwd-overlay.hidden {
   display: none;
 }
 

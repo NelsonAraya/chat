@@ -5,6 +5,7 @@ module.exports = (io, db) => {
   const { data, save, hashPassword } = db;
   const users = new Map();
   const roomUsers = new Map();
+  const roomUnreads = {};
 
   const getOnlineUsers = (roomName) => {
     const sockets = roomUsers.get(roomName);
@@ -162,7 +163,8 @@ module.exports = (io, db) => {
         }
       }
 
-      users.set(socket.id, { username: name, currentRoom: null, displayName: userRecord.displayName || name, avatar: userRecord.avatar || null, location: userRecord.location || '' });
+      const role = userRecord.role || 'user';
+      users.set(socket.id, { username: name, currentRoom: null, displayName: userRecord.displayName || name, avatar: userRecord.avatar || null, location: userRecord.location || '', role });
       socket.username = name;
       socket.displayName = userRecord.displayName || name;
       socket.avatar = userRecord.avatar || null;
@@ -173,7 +175,8 @@ module.exports = (io, db) => {
         rooms: getAllRooms(),
         displayName: userRecord.displayName || name,
         avatar: userRecord.avatar || null,
-        location: userRecord.location || ''
+        location: userRecord.location || '',
+        role
       });
     });
 
@@ -233,6 +236,11 @@ module.exports = (io, db) => {
         allUsers: getAllUsers()
       });
 
+      if (roomUnreads[user.username]) {
+        roomUnreads[user.username][roomName] = 0;
+      }
+      io.to(socket.id).emit('room-unread-update', { room: roomName, count: 0 });
+
       callback?.({
         ok: true,
         history: getRoomHistory(roomName),
@@ -269,6 +277,16 @@ module.exports = (io, db) => {
       save();
 
       io.to(user.currentRoom).emit('room-message', msg);
+
+      for (const [sid, u] of users) {
+        if (u.currentRoom !== user.currentRoom) {
+          if (!roomUnreads[u.username]) roomUnreads[u.username] = {};
+          const count = (roomUnreads[u.username][user.currentRoom] || 0) + 1;
+          roomUnreads[u.username][user.currentRoom] = count;
+          io.to(sid).emit('room-unread-update', { room: user.currentRoom, count });
+        }
+      }
+
       callback?.({ ok: true });
     });
 
@@ -457,6 +475,10 @@ module.exports = (io, db) => {
       const password = data_?.password?.trim() || null;
       const temporary = !!data_?.temporary;
 
+      if (!temporary && user.role !== 'admin') {
+        return callback?.({ ok: false, error: 'Solo administradores pueden crear salas fijas' });
+      }
+
       data.rooms.push({
         name,
         created_by: user.username,
@@ -482,6 +504,144 @@ module.exports = (io, db) => {
       const user = users.get(socket.id);
       if (!user) return;
       callback?.(getConversations(user.username));
+    });
+
+    socket.on('get-room-unreads', (callback) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+      callback?.(roomUnreads[user.username] || {});
+    });
+
+    socket.on('get-all-registered-users', (callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.([]);
+      callback?.(data.users.map(u => ({
+        username: u.username,
+        displayName: u.displayName || u.username,
+        role: u.role || 'user',
+        created_at: u.created_at
+      })));
+    });
+
+    socket.on('update-user', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.({ ok: false, error: 'No autorizado' });
+
+      const { username, displayName, role } = data_ || {};
+      if (!username) return callback?.({ ok: false, error: 'Usuario requerido' });
+
+      const target = data.users.find(u => u.username === username);
+      if (!target) return callback?.({ ok: false, error: 'Usuario no encontrado' });
+
+      if (displayName !== undefined) target.displayName = displayName;
+      if (role !== undefined && (role === 'admin' || role === 'user')) target.role = role;
+      save();
+
+      io.emit('display-name-updated', { username, displayName: target.displayName || username });
+
+      callback?.({ ok: true });
+    });
+
+    socket.on('delete-room', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.({ ok: false, error: 'No autorizado' });
+
+      const roomName = data_?.name;
+      if (!roomName) return callback?.({ ok: false, error: 'Nombre requerido' });
+
+      const idx = data.rooms.findIndex(r => r.name === roomName);
+      if (idx === -1) return callback?.({ ok: false, error: 'Sala no existe' });
+      if (roomName === 'general') return callback?.({ ok: false, error: 'No puedes eliminar la sala general' });
+
+      data.rooms.splice(idx, 1);
+      data.messages = data.messages.filter(m => m.room_name !== roomName);
+      save();
+
+      io.emit('room-deleted', { name: roomName });
+      callback?.({ ok: true });
+    });
+
+    socket.on('admin-set-room-password', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.({ ok: false, error: 'No autorizado' });
+
+      const { name, password } = data_ || {};
+      if (!name) return callback?.({ ok: false, error: 'Nombre requerido' });
+      if (name === 'general') return callback?.({ ok: false, error: 'No puedes cambiar la contraseña de la sala general' });
+
+      const room = data.rooms.find(r => r.name === name);
+      if (!room) return callback?.({ ok: false, error: 'Sala no existe' });
+
+      room.password = password ? hashPassword(password) : null;
+      save();
+
+      io.emit('room-password-changed', { name, hasPassword: !!room.password });
+      callback?.({ ok: true });
+    });
+
+    socket.on('get-stats', (callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return;
+      callback({
+        totalUsers: data.users.length,
+        connectedUsers: users.size,
+        totalMessages: data.messages.length,
+        totalRooms: data.rooms.length
+      });
+    });
+
+    socket.on('admin-reset-password', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.({ ok: false, error: 'No autorizado' });
+
+      const { username, newPassword } = data_ || {};
+      if (!username) return callback?.({ ok: false, error: 'Usuario requerido' });
+      if (username === user.username) return callback?.({ ok: false, error: 'No puedes cambiar tu propia contraseña aquí' });
+      if (!newPassword || newPassword.length < 3) return callback?.({ ok: false, error: 'Mínimo 3 caracteres' });
+
+      const target = data.users.find(u => u.username === username);
+      if (!target) return callback?.({ ok: false, error: 'Usuario no encontrado' });
+
+      target.password = hashPassword(newPassword);
+      save();
+      callback?.({ ok: true });
+    });
+
+    socket.on('admin-delete-user', (data_, callback) => {
+      const user = users.get(socket.id);
+      if (!user || user.role !== 'admin') return callback?.({ ok: false, error: 'No autorizado' });
+
+      const delUsername = data_?.username;
+      if (!delUsername) return callback?.({ ok: false, error: 'Usuario requerido' });
+      if (delUsername === user.username) return callback?.({ ok: false, error: 'No puedes eliminarte a ti mismo' });
+      if (delUsername === 'admin') return callback?.({ ok: false, error: 'No puedes eliminar al usuario admin' });
+
+      const idx = data.users.findIndex(u => u.username === delUsername);
+      if (idx === -1) return callback?.({ ok: false, error: 'Usuario no encontrado' });
+
+      data.users.splice(idx, 1);
+      save();
+
+      for (const [sid, u] of users) {
+        if (u.username === delUsername) {
+          for (const [roomName, sockets] of roomUsers) {
+            if (sockets.has(sid)) {
+              sockets.delete(sid);
+              if (sockets.size === 0) roomUsers.delete(roomName);
+              break;
+            }
+          }
+          if (roomUnreads[delUsername]) {
+            delete roomUnreads[delUsername];
+          }
+          io.to(sid).emit('force-disconnect', { reason: 'Tu cuenta ha sido eliminada por un administrador' });
+          users.delete(sid);
+          break;
+        }
+      }
+
+      io.emit('all-users', { users: getAllUsers() });
+      callback?.({ ok: true });
     });
 
     socket.on('panic-alert', () => {
@@ -545,6 +705,9 @@ module.exports = (io, db) => {
         }
       }
 
+      if (user.username && roomUnreads[user.username]) {
+        delete roomUnreads[user.username];
+      }
       users.delete(socket.id);
       io.emit('all-users', { users: getAllUsers() });
 

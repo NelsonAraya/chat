@@ -9,10 +9,12 @@ let privateRecipient = null;
 let rooms = [];
 let conversations = [];
 let unreadCounts = {};
+let roomUnreadCounts = {};
 let unreadTotal = 0;
 let pendingPasswordRoom = null;
 let sidebarTab = 'rooms';
 let roomPasswords = {};
+let currentRole = 'user';
 let pendingFile = null;
 let replyingTo = null;
 
@@ -55,7 +57,35 @@ const logoutBtn = $('logout-btn');
 const roomsList = $('rooms-list');
 const conversationsList = $('conversations-list');
 const convTotalBadge = $('conv-total-badge');
+const roomTotalBadge = $('room-total-badge');
 const allUsersList = $('all-users-list');
+const adminTab = $('admin-tab');
+const adminUsersList = $('admin-users-list');
+const adminRoomsList = $('admin-rooms-list');
+const adminEditOverlay = $('admin-edit-user-overlay');
+const adminEditUsernameDisplay = $('admin-edit-username-display');
+const adminEditDisplayname = $('admin-edit-displayname');
+const adminEditRole = $('admin-edit-role');
+const adminEditError = $('admin-edit-error');
+const adminEditConfirm = $('admin-edit-confirm');
+const adminEditCancel = $('admin-edit-cancel');
+const adminEditClose = $('admin-edit-user-close');
+const adminEditPassword = $('admin-edit-password');
+const adminEditPasswordConfirm = $('admin-edit-password-confirm');
+const adminEditDeleteBtn = $('admin-edit-delete-btn');
+const adminStats = $('admin-stats');
+const adminStatUsers = $('admin-stat-users');
+const adminStatOnline = $('admin-stat-online');
+const adminStatMsgs = $('admin-stat-msgs');
+const adminStatRooms = $('admin-stat-rooms');
+const adminRoomPwdOverlay = $('admin-room-pwd-overlay');
+const adminRoomPwdName = $('admin-room-pwd-name');
+const adminRoomPwdStatus = $('admin-room-pwd-status');
+const adminRoomPwdInput = $('admin-room-pwd-input');
+const adminRoomPwdError = $('admin-room-pwd-error');
+const adminRoomPwdConfirm = $('admin-room-pwd-confirm');
+const adminRoomPwdCancel = $('admin-room-pwd-cancel');
+const adminRoomPwdClose = $('admin-room-pwd-close');
 
 const messagesList = $('messages-list');
 const messagesStart = $('messages-start');
@@ -76,6 +106,7 @@ const createModalOverlay = $('create-modal-overlay');
 const createModalInput = $('create-modal-input');
 const createModalPassword = $('create-modal-password');
 const createModalTemporary = $('create-modal-temporary');
+const createModalInfo = $('create-modal-info');
 const createModalConfirm = $('create-modal-confirm');
 const createModalCancel = $('create-modal-cancel');
 const createModalClose = $('create-modal-close');
@@ -208,16 +239,24 @@ function showToast(msg) {
 }
 
 function updateTitle() {
-  document.title = unreadTotal > 0
-    ? '(' + unreadTotal + ') Chat Cormudesi'
+  var roomTotal = 0;
+  for (var k in roomUnreadCounts) {
+    if (roomUnreadCounts.hasOwnProperty(k)) roomTotal += roomUnreadCounts[k];
+  }
+  var total = unreadTotal + roomTotal;
+  document.title = total > 0
+    ? '(' + total + ') Chat Cormudesi'
     : 'Chat Cormudesi';
 }
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
     unreadTotal = 0;
+    roomUnreadCounts = {};
+    renderRooms();
     updateTitle();
     updateConvTotalBadge();
+    updateRoomTotalBadge();
   }
 });
 
@@ -446,14 +485,23 @@ function doLogin(username, password, callback) {
     currentDisplayName = res.displayName || username;
     currentAvatar = res.avatar || null;
     currentLocation = res.location || '';
+    currentRole = res.role || 'user';
     rooms = res.rooms || [];
     loginScreen.classList.add('hidden');
     chatScreen.classList.remove('hidden');
     displayName.textContent = currentDisplayName;
     updateHeaderAvatar();
+    if (currentRole === 'admin') {
+      adminTab.classList.remove('hidden');
+    }
     localStorage.setItem('chat_user', username.toLowerCase());
     localStorage.setItem('chat_pass', password);
     initializeChat();
+    socket.emit('get-room-unreads', function(counts) {
+      roomUnreadCounts = counts || {};
+      renderRooms();
+      updateRoomTotalBadge();
+    });
     callback?.({ ok: true });
   });
 }
@@ -477,12 +525,21 @@ function tryAutoLogin() {
       currentDisplayName = res.displayName || savedUser;
       currentAvatar = res.avatar || null;
       currentLocation = res.location || '';
+      currentRole = res.role || 'user';
       rooms = res.rooms || [];
       loginScreen.classList.add('hidden');
       chatScreen.classList.remove('hidden');
       displayName.textContent = currentDisplayName;
       updateHeaderAvatar();
+      if (currentRole === 'admin') {
+        adminTab.classList.remove('hidden');
+      }
       initializeChat();
+      socket.emit('get-room-unreads', function(counts) {
+        roomUnreadCounts = counts || {};
+        renderRooms();
+        updateRoomTotalBadge();
+      });
     });
     return true;
   }
@@ -793,6 +850,7 @@ document.querySelectorAll('.sidebar-tab').forEach(tab => {
     sidebarTab = tab.dataset.panel;
     document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.add('hidden'));
     $(sidebarTab + '-panel').classList.remove('hidden');
+    if (sidebarTab === 'admin') renderAdminPanel();
   });
 });
 
@@ -802,17 +860,99 @@ function renderRooms() {
     var extra = '';
     if (r.hasPassword) { icon = 'fas fa-lock'; extra = ' room-icon-lock'; }
     if (r.temporary) { icon = 'far fa-clock'; extra = ' room-icon-temp'; }
-    return '<div class="room-item' + (r.name === currentRoom ? ' active' : '') + '" data-room="' + escapeHtml(r.name) + '">' +
+    var unread = roomUnreadCounts[r.name] || 0;
+    var badgeHtml = unread > 0 ? '<span class="room-badge">' + unread + '</span>' : '';
+    return '<div class="room-item' + (r.name === currentRoom ? ' active' : '') + (unread > 0 ? ' unread' : '') + '" data-room="' + escapeHtml(r.name) + '">' +
       '<i class="' + icon + extra + '"></i>' +
-      '<span>' + escapeHtml(r.name) + '</span></div>';
+      '<span>' + escapeHtml(r.name) + '</span>' + badgeHtml + '</div>';
   }).join('');
 
   roomsList.querySelectorAll('.room-item').forEach(function(el) {
     el.addEventListener('click', function() {
       var room = el.dataset.room;
-      if (room !== currentRoom) {
+      if (room !== currentRoom || privateRecipient) {
         cancelPrivate();
         joinRoom({ name: room });
+      }
+    });
+  });
+}
+
+function renderAdminPanel() {
+  socket.emit('get-stats', function(stats) {
+    if (stats) {
+      adminStatUsers.textContent = stats.totalUsers;
+      adminStatOnline.textContent = stats.connectedUsers;
+      adminStatMsgs.textContent = stats.totalMessages;
+      adminStatRooms.textContent = stats.totalRooms;
+    }
+  });
+
+  socket.emit('get-all-registered-users', function(users) {
+    adminUsersList.innerHTML = users.map(function(u) {
+      var isAdmin = u.role === 'admin';
+      return '<div class="admin-user-item">' +
+        '<div class="admin-user-info">' +
+          '<div class="admin-user-name">' + escapeHtml(u.displayName || u.username) + '</div>' +
+          '<div class="admin-user-username">@' + escapeHtml(u.username) + '  <span class="admin-user-role' + (isAdmin ? ' admin-role-badge' : '') + '">' + (isAdmin ? 'Admin' : 'User') + '</span></div>' +
+        '</div>' +
+        '<button class="admin-user-edit-btn btn-icon" data-username="' + escapeHtml(u.username) + '" data-displayname="' + escapeHtml(u.displayName || u.username) + '" data-role="' + u.role + '" title="Editar usuario"><i class="fas fa-pen"></i></button>' +
+      '</div>';
+    }).join('');
+
+    adminUsersList.querySelectorAll('.admin-user-edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        adminEditUsernameDisplay.textContent = btn.dataset.username;
+        adminEditDisplayname.value = btn.dataset.displayname;
+        adminEditRole.value = btn.dataset.role;
+        adminEditPassword.value = '';
+        adminEditPasswordConfirm.value = '';
+        adminEditDeleteBtn.disabled = false;
+        adminEditDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar usuario';
+        adminEditError.textContent = '';
+        adminEditOverlay.classList.remove('hidden');
+        adminEditDisplayname.focus();
+      });
+    });
+  });
+
+  adminRoomsList.innerHTML = rooms.map(function(r) {
+    var actions = '';
+    if (r.name !== 'general') {
+      if (!r.temporary) {
+        actions += '<button class="admin-room-lock-btn btn-icon" data-room="' + escapeHtml(r.name) + '" data-haspassword="' + r.hasPassword + '" title="' + (r.hasPassword ? 'Cambiar contraseña' : 'Poner contraseña') + '"><i class="fas ' + (r.hasPassword ? 'fa-lock' : 'fa-unlock') + '"></i></button>';
+      }
+      actions += '<button class="admin-room-delete-btn btn-icon" data-room="' + escapeHtml(r.name) + '" title="Eliminar sala"><i class="fas fa-trash"></i></button>';
+    }
+    return '<div class="admin-room-item">' +
+      '<div class="admin-room-info">' +
+        '<span class="admin-room-name">#' + escapeHtml(r.name) + '</span>' +
+        '<span class="admin-room-meta">' + (r.temporary ? 'Temporal' : 'Fija') + (r.hasPassword ? ' · 🔒' : '') + '</span>' +
+      '</div>' +
+      '<div class="admin-room-actions">' + actions + '</div>' +
+    '</div>';
+  }).join('');
+
+  adminRoomsList.querySelectorAll('.admin-room-lock-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      adminRoomPwdName.textContent = '#' + btn.dataset.room;
+      adminRoomPwdStatus.textContent = btn.dataset.haspassword === 'true' ? 'Protegida' : 'Abierta';
+      adminRoomPwdInput.value = '';
+      adminRoomPwdError.textContent = '';
+      adminRoomPwdOverlay.classList.remove('hidden');
+      adminRoomPwdInput.focus();
+      adminRoomPwdConfirm.dataset.room = btn.dataset.room;
+    });
+  });
+
+  adminRoomsList.querySelectorAll('.admin-room-delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var roomName = btn.dataset.room;
+      if (confirm('¿Eliminar la sala #' + roomName + '?\nSe borrarán todos sus mensajes.')) {
+        socket.emit('delete-room', { name: roomName }, function(res) {
+          if (!res.ok) { showToast(res.error); return; }
+          showToast('Sala #' + roomName + ' eliminada');
+        });
       }
     });
   });
@@ -830,9 +970,6 @@ function joinRoom(data) {
     payload.password = data.password;
   }
 
-  currentRoom = name;
-  privateRecipient = null;
-
   socket.emit('join-room', payload, function(res) {
     if (!res.ok) {
       if (res.requirePassword) {
@@ -848,6 +985,9 @@ function joinRoom(data) {
       return;
     }
 
+    currentRoom = name;
+    privateRecipient = null;
+    roomUnreadCounts[name] = 0;
     contextName.textContent = name;
     if (res.hasPassword) contextIcon.className = 'fas fa-lock';
     else if (res.temporary) contextIcon.className = 'far fa-clock';
@@ -867,8 +1007,16 @@ $('create-room-btn').addEventListener('click', function() {
   createModalOverlay.classList.remove('hidden');
   createModalInput.value = '';
   createModalPassword.value = '';
-  createModalTemporary.checked = false;
   createModalError.textContent = '';
+  if (currentRole !== 'admin') {
+    createModalTemporary.checked = true;
+    createModalTemporary.disabled = true;
+    createModalInfo.classList.remove('hidden');
+  } else {
+    createModalTemporary.checked = false;
+    createModalTemporary.disabled = false;
+    createModalInfo.classList.add('hidden');
+  }
   createModalInput.focus();
 });
 
@@ -916,6 +1064,130 @@ createModalConfirm.addEventListener('click', function() {
     joinRoom({ name: res.name });
   });
 });
+
+// ===================== ADMIN EDIT USER MODAL =====================
+
+adminEditConfirm.addEventListener('click', function() {
+  var username = adminEditUsernameDisplay.textContent;
+  var displayName = adminEditDisplayname.value.trim();
+  var role = adminEditRole.value;
+  var newPassword = adminEditPassword.value;
+  var newPasswordConfirm = adminEditPasswordConfirm.value;
+
+  if (!displayName) { adminEditError.textContent = 'Nombre requerido'; return; }
+
+  if (newPassword || newPasswordConfirm) {
+    if (newPassword.length < 3) { adminEditError.textContent = 'Contraseña: mínimo 3 caracteres'; return; }
+    if (newPassword !== newPasswordConfirm) { adminEditError.textContent = 'Las contraseñas no coinciden'; return; }
+  }
+
+  adminEditConfirm.disabled = true;
+  adminEditConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+  socket.emit('update-user', { username, displayName, role }, function(res) {
+    if (!res.ok) {
+      adminEditConfirm.disabled = false;
+      adminEditConfirm.innerHTML = '<i class="fas fa-save"></i> Guardar';
+      adminEditError.textContent = res.error;
+      return;
+    }
+
+    function done() {
+      adminEditConfirm.disabled = false;
+      adminEditConfirm.innerHTML = '<i class="fas fa-save"></i> Guardar';
+      adminEditOverlay.classList.add('hidden');
+      renderAdminPanel();
+    }
+
+    if (newPassword) {
+      socket.emit('admin-reset-password', { username, newPassword }, function(pwdRes) {
+        if (!pwdRes.ok) {
+          showToast('Usuario actualizado, pero error al cambiar contraseña: ' + pwdRes.error);
+        } else {
+          showToast('Usuario y contraseña actualizados');
+        }
+        done();
+      });
+    } else {
+      showToast('Usuario actualizado');
+      done();
+    }
+  });
+});
+
+function closeAdminEdit() {
+  adminEditOverlay.classList.add('hidden');
+}
+
+adminEditCancel.addEventListener('click', closeAdminEdit);
+adminEditClose.addEventListener('click', closeAdminEdit);
+adminEditOverlay.addEventListener('click', function(e) {
+  if (e.target === adminEditOverlay) closeAdminEdit();
+});
+
+adminEditDisplayname.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') adminEditConfirm.click();
+});
+
+adminEditDeleteBtn.addEventListener('click', function() {
+  var username = adminEditUsernameDisplay.textContent;
+  if (!confirm('¿Eliminar al usuario "' + username + '"?\nSe eliminará su cuenta permanentemente.')) return;
+
+  adminEditDeleteBtn.disabled = true;
+  adminEditDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+
+  socket.emit('admin-delete-user', { username: username }, function(res) {
+    adminEditDeleteBtn.disabled = false;
+    adminEditDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar usuario';
+    if (!res.ok) { adminEditError.textContent = res.error; return; }
+    showToast('Usuario ' + username + ' eliminado');
+    adminEditOverlay.classList.add('hidden');
+    renderAdminPanel();
+  });
+});
+
+adminEditPassword.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') adminEditPasswordConfirm.focus();
+});
+adminEditPasswordConfirm.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') adminEditConfirm.click();
+});
+
+// ===================== END ADMIN EDIT =====================
+
+// ===================== ADMIN ROOM PASSWORD MODAL =====================
+
+function closeAdminRoomPwdModal() {
+  adminRoomPwdOverlay.classList.add('hidden');
+}
+
+adminRoomPwdClose.addEventListener('click', closeAdminRoomPwdModal);
+adminRoomPwdCancel.addEventListener('click', closeAdminRoomPwdModal);
+adminRoomPwdOverlay.addEventListener('click', function(e) {
+  if (e.target === adminRoomPwdOverlay) closeAdminRoomPwdModal();
+});
+
+adminRoomPwdInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') adminRoomPwdConfirm.click();
+});
+
+adminRoomPwdConfirm.addEventListener('click', function() {
+  var roomName = adminRoomPwdConfirm.dataset.room;
+  var password = adminRoomPwdInput.value;
+
+  adminRoomPwdConfirm.disabled = true;
+  adminRoomPwdConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+  socket.emit('admin-set-room-password', { name: roomName, password: password || null }, function(res) {
+    adminRoomPwdConfirm.disabled = false;
+    adminRoomPwdConfirm.innerHTML = '<i class="fas fa-check"></i> Guardar';
+    if (!res.ok) { adminRoomPwdError.textContent = res.error; return; }
+    closeAdminRoomPwdModal();
+    showToast(password ? 'Contraseña asignada a #' + roomName : 'Contraseña quitada de #' + roomName);
+  });
+});
+
+// ===================== END ADMIN ROOM PASSWORD MODAL =====================
 
 function closePasswordModal() {
   passwordModalOverlay.classList.add('hidden');
@@ -1000,6 +1272,20 @@ function updateConvTotalBadge() {
     convTotalBadge.classList.remove('hidden');
   } else {
     convTotalBadge.classList.add('hidden');
+  }
+  updateTitle();
+}
+
+function updateRoomTotalBadge() {
+  var total = 0;
+  for (var k in roomUnreadCounts) {
+    if (roomUnreadCounts.hasOwnProperty(k)) total += roomUnreadCounts[k];
+  }
+  if (total > 0) {
+    roomTotalBadge.textContent = total;
+    roomTotalBadge.classList.remove('hidden');
+  } else {
+    roomTotalBadge.classList.add('hidden');
   }
   updateTitle();
 }
@@ -1277,7 +1563,12 @@ function cancelPrivate() {
     messageInput.placeholder = 'Escribe en #' + currentRoom + '...';
 
     socket.emit('join-room', { name: currentRoom }, function(res) {
-      if (res?.ok) renderMessages(res.history);
+      if (res?.ok) {
+        roomUnreadCounts[currentRoom] = 0;
+        renderRooms();
+        updateRoomTotalBadge();
+        renderMessages(res.history);
+      }
     });
   }
   renderConversations();
@@ -1368,9 +1659,14 @@ function renderAllUsers(users) {
 }
 
 socket.on('room-message', function(msg) {
-  if (privateRecipient) return;
   if (msg.sender !== currentUser) playNotification();
   renderMessage(msg);
+});
+
+socket.on('room-unread-update', function(data) {
+  roomUnreadCounts[data.room] = data.count;
+  renderRooms();
+  updateRoomTotalBadge();
 });
 
 socket.on('private-message', function(msg) {
@@ -1445,12 +1741,14 @@ socket.on('avatar-updated', function(data) {
 socket.on('room-created', function(data) {
   rooms.push({ name: data.name, hasPassword: !!data.hasPassword, temporary: !!data.temporary });
   renderRooms();
+  if (sidebarTab === 'admin') renderAdminPanel();
   showToast('Sala #' + data.name + ' creada');
 });
 
 socket.on('room-deleted', function(data) {
   rooms = rooms.filter(function(r) { return r.name !== data.name; });
   renderRooms();
+  if (sidebarTab === 'admin') renderAdminPanel();
   if (currentRoom === data.name) {
     showToast('La sala #' + data.name + ' se ha cerrado');
     joinRoom({ name: 'general' });
@@ -1459,9 +1757,25 @@ socket.on('room-deleted', function(data) {
   }
 });
 
+socket.on('room-password-changed', function(data) {
+  var found = rooms.find(function(r) { return r.name === data.name; });
+  if (found) {
+    found.hasPassword = data.hasPassword;
+    renderRooms();
+    if (sidebarTab === 'admin') renderAdminPanel();
+  }
+});
+
 socket.on('panic-alert', function(data) {
   showPanicModal(data);
   playPanicSound();
+});
+
+socket.on('force-disconnect', function(data) {
+  alert(data.reason || 'Has sido desconectado');
+  localStorage.removeItem('chat_user');
+  localStorage.removeItem('chat_pass');
+  location.reload();
 });
 
 // Certificado banner logic

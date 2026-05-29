@@ -87,8 +87,9 @@ Al iniciar el servidor por primera vez se crea automáticamente:
 
 - **Usuario:** `admin`
 - **Contraseña:** `admin`
+- **Rol:** Administrador
 
-Cambia la contraseña del admin después del primer ingreso.
+Cambia la contraseña del admin después del primer ingreso. Usa el panel Admin (⚙) para crear usuarios y gestionar salas.
 
 ## Puertos personalizados
 
@@ -125,6 +126,43 @@ El chat incluye un botón de alerta (pánico) en la barra lateral izquierda.
 - Si no has configurado ubicación se mostrará como "Indeterminada"
 - El sonido de alerta se puede personalizar reemplazando `public/sounds/alerta.mp3`
 
+## Panel de Administración
+
+Los usuarios con rol **admin** ven una tercera pestaña ⚙ en la barra lateral con las siguientes capacidades:
+
+### Estadísticas
+
+Cuatro tarjetas en la parte superior del panel con:
+- **Usuarios:** total de cuentas registradas
+- **Conectados:** usuarios online en este momento
+- **Mensajes:** total de mensajes enviados
+- **Salas:** total de salas creadas
+
+### Gestión de usuarios
+
+Al hacer clic en ✏ junto a un usuario se abre un modal para:
+- Cambiar nombre visible
+- Cambiar rol (Usuario / Administrador)
+- **Resetear contraseña** (campo opcional — si se deja vacío no se modifica)
+- **Eliminar usuario** (botón rojo con confirmación)
+
+> Reglas de seguridad: un admin no puede eliminarse a sí mismo, no puede eliminar al usuario `admin`, y no puede cambiar su propia contraseña desde este panel (debe usar el modal de cambio de contraseña normal).
+
+### Gestión de salas
+
+Cada sala fija (no temporal, excepto `#general`) tiene dos botones:
+- 🔒/🔓 — Asignar o quitar contraseña de la sala
+- 🗑 — Eliminar la sala (solo salas no temporales, excepto `#general`)
+
+Las salas temporales se eliminan automáticamente al quedar vacías.
+
+## Notificaciones no leídas
+
+- Cada sala muestra un badge 🔴 con la cantidad de mensajes no leídos
+- La pestaña **Salas** suma todos los no leídos en un badge general
+- Al hacer clic en una sala o al volver a la pestaña del navegador, los contadores se reinician
+- Los mensajes privados también muestran badge 🔴 en la pestaña **Privados**
+
 ## Persistencia de datos
 
 - Los usuarios y salas se guardan en `data.json` (permanente)
@@ -152,7 +190,16 @@ chat-cormudesi/
 │   ├── styles.css        # Estilos
 │   ├── app.js            # Lógica del cliente
 │   └── img/
-│       └── logo.png      # Logo de CORMUDESI
+│       ├── logo.png      # Logo de CORMUDESI
+│       ├── cert-01-download.png
+│       ├── cert-02-open.png
+│       ├── cert-03-install.png
+│       ├── cert-04-local-machine.png
+│       ├── cert-05-browse.png
+│       ├── cert-06-trusted-root.png
+│       ├── cert-07-finish.png
+│       ├── cert-08-security.png
+│       └── cert-09-done.png  # Pasos para instalar certificado
 ```
 
 ## Licencia

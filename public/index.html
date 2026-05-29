@@ -198,10 +198,14 @@
         <div class="sidebar-tabs">
           <button class="sidebar-tab active" data-panel="rooms">
             <i class="fas fa-hashtag"></i> Salas
+            <span id="room-total-badge" class="sb-badge hidden">0</span>
           </button>
           <button class="sidebar-tab" data-panel="conversations">
             <i class="fas fa-envelope"></i> Privados
             <span id="conv-total-badge" class="sb-badge hidden">0</span>
+          </button>
+          <button class="sidebar-tab hidden" data-panel="admin" id="admin-tab">
+            <i class="fas fa-cog"></i> Admin
           </button>
         </div>
         <div id="rooms-panel" class="sidebar-panel">
@@ -220,6 +224,33 @@
         </div>
         <div id="conversations-panel" class="sidebar-panel hidden">
           <div id="conversations-list"></div>
+        </div>
+        <div id="admin-panel" class="sidebar-panel hidden">
+          <div class="sidebar-header" style="padding: 12px; border-bottom: 1px solid var(--border-color);">
+            <h3><i class="fas fa-cog"></i> Administración</h3>
+          </div>
+          <div id="admin-stats" class="admin-stats">
+            <div class="admin-stat-card">
+              <div class="admin-stat-value" id="admin-stat-users">0</div>
+              <div class="admin-stat-label">Usuarios</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-value" id="admin-stat-online">0</div>
+              <div class="admin-stat-label">Conectados</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-value" id="admin-stat-msgs">0</div>
+              <div class="admin-stat-label">Mensajes</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-value" id="admin-stat-rooms">0</div>
+              <div class="admin-stat-label">Salas</div>
+            </div>
+          </div>
+          <div class="sidebar-label" style="padding: 8px 12px 4px;">Usuarios</div>
+          <div id="admin-users-list"></div>
+          <div class="sidebar-label" style="padding: 12px 12px 4px; margin-top: 4px;">Salas</div>
+          <div id="admin-rooms-list"></div>
         </div>
       </aside>
 
@@ -327,6 +358,9 @@
           <input type="checkbox" id="create-modal-temporary" />
           <i class="far fa-clock"></i> Sala temporal (se elimina al quedar vacía)
         </label>
+        <p id="create-modal-info" class="create-modal-info hidden">
+          <i class="fas fa-info-circle"></i> Solo administradores pueden crear salas fijas
+        </p>
         <p id="create-modal-error" class="login-error"></p>
       </div>
       <div class="modal-footer">
@@ -470,6 +504,78 @@
         <button id="panic-modal-ok" class="btn-primary panic-btn-ok">
           <i class="fas fa-check"></i> Entendido
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-edit-user-overlay" class="hidden">
+    <div id="admin-edit-user-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-edit"></i> Editar usuario</h3>
+        <button id="admin-edit-user-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:12px;font-size:14px;color:var(--text-secondary);">
+          Editando a <strong id="admin-edit-username-display"></strong>
+        </p>
+        <div class="input-group">
+          <i class="fas fa-tag input-icon"></i>
+          <input type="text" id="admin-edit-displayname" placeholder="Nombre visible" maxlength="40" />
+        </div>
+        <div style="margin-top:12px;">
+          <label style="font-size:14px;font-weight:500;display:block;margin-bottom:6px;">Rol</label>
+          <select id="admin-edit-role" style="width:100%;padding:10px 12px;border-radius:var(--border-radius-sm);border:1px solid var(--border-color);font-size:14px;background:var(--bg-input);">
+            <option value="user">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="admin-edit-pwd-section">
+          <label class="admin-edit-section-label"><i class="fas fa-key"></i> Cambiar contraseña (opcional)</label>
+          <div class="input-group" style="margin-bottom:8px;">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="admin-edit-password" placeholder="Nueva contraseña..." />
+          </div>
+          <div class="input-group">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="admin-edit-password-confirm" placeholder="Repetir contraseña..." />
+          </div>
+        </div>
+        <div class="admin-edit-delete-section">
+          <button id="admin-edit-delete-btn" class="btn-danger" style="width:100%;">
+            <i class="fas fa-trash"></i> Eliminar usuario
+          </button>
+        </div>
+        <p id="admin-edit-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="admin-edit-cancel" class="btn-secondary">Cancelar</button>
+        <button id="admin-edit-confirm" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-room-pwd-overlay" class="hidden">
+    <div id="admin-room-pwd-modal" class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fas fa-lock"></i> Contraseña de sala</h3>
+        <button id="admin-room-pwd-close" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:12px;font-size:14px;color:var(--text-secondary);">
+          Configurar contraseña para <strong id="admin-room-pwd-name"></strong>
+        </p>
+        <p style="margin-bottom:12px;font-size:13px;color:var(--text-muted);">
+          Estado actual: <span id="admin-room-pwd-status">Abierta</span>
+        </p>
+        <div class="input-group">
+          <i class="fas fa-key input-icon"></i>
+          <input type="password" id="admin-room-pwd-input" placeholder="Nueva contraseña (vacío = quitar)" />
+        </div>
+        <p id="admin-room-pwd-error" class="login-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="admin-room-pwd-cancel" class="btn-secondary">Cancelar</button>
+        <button id="admin-room-pwd-confirm" class="btn-primary"><i class="fas fa-check"></i> Guardar</button>
       </div>
     </div>
   </div>
