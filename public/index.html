@@ -73,26 +73,90 @@
   </div>
 
   <div id="cert-modal-overlay" class="hidden">
-    <div id="cert-modal" class="modal-box" style="max-width: 560px;">
+    <div id="cert-modal" class="modal-box cert-modal-box">
       <div class="modal-header">
         <h3><i class="fas fa-shield-alt"></i> Instalar certificado de seguridad</h3>
         <button id="cert-modal-close" class="btn-icon"><i class="fas fa-times"></i></button>
       </div>
-      <div class="modal-body" style="font-size: 14px; line-height: 1.6;">
-        <p style="margin-bottom: 16px;">Sigue estos pasos para que el navegador confíe en este sitio sin mostrar advertencias de seguridad:</p>
-        <ol style="margin-left: 20px; margin-bottom: 16px;">
-          <li style="margin-bottom: 8px;">Haz clic en <strong>"Descargar certificado"</strong> (botón verde de arriba).</li>
-          <li style="margin-bottom: 8px;">Abre el archivo descargado <strong>Chat-CORMUDESI-cert.cer</strong>.</li>
-          <li style="margin-bottom: 8px;">Haz clic en <strong>"Instalar certificado"</strong>.</li>
-          <li style="margin-bottom: 8px;">Elige: <strong>"Máquina local"</strong> → <strong>Siguiente</strong>.</li>
-          <li style="margin-bottom: 8px;">Elige: <strong>"Colocar todos los certificados en el siguiente almacén"</strong> → <strong>Examinar</strong>.</li>
-          <li style="margin-bottom: 8px;">Selecciona: <strong>"Entidades de certificación raíz de confianza"</strong> → <strong>Aceptar</strong>.</li>
-          <li style="margin-bottom: 8px;">Haz clic en <strong>"Siguiente"</strong> → <strong>"Finalizar"</strong>.</li>
-          <li style="margin-bottom: 8px;">Verás un mensaje de seguridad → haz clic en <strong>"Sí"</strong>.</li>
-        </ol>
-        <p style="color: var(--color-success); font-weight: 600;">
-          <i class="fas fa-check-circle"></i> ¡Listo! Vuelve a cargar la página y la advertencia desaparecerá.
-        </p>
+      <div class="modal-body cert-modal-body">
+        <p class="cert-intro">Sigue estos pasos para que el navegador confíe en este sitio sin mostrar advertencias de seguridad:</p>
+
+        <div class="cert-step">
+          <div class="cert-step-num">1</div>
+          <div class="cert-step-content">
+            <p>Haz clic en <strong>"Descargar certificado"</strong> (botón verde en el banner de arriba).</p>
+            <img src="img/cert-01-download.png" alt="Paso 1: Descargar certificado" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">2</div>
+          <div class="cert-step-content">
+            <p>Abre el archivo descargado <strong>Chat-CORMUDESI-cert.cer</strong>.</p>
+            <img src="img/cert-02-open.png" alt="Paso 2: Abrir archivo" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">3</div>
+          <div class="cert-step-content">
+            <p>Haz clic en <strong>"Instalar certificado"</strong>.</p>
+            <img src="img/cert-03-install.png" alt="Paso 3: Instalar certificado" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">4</div>
+          <div class="cert-step-content">
+            <p>Selecciona <strong>"Máquina local"</strong> y haz clic en <strong>"Siguiente"</strong>.</p>
+            <img src="img/cert-04-local-machine.png" alt="Paso 4: Máquina local" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">5</div>
+          <div class="cert-step-content">
+            <p>Selecciona <strong>"Colocar todos los certificados en el siguiente almacén"</strong> y haz clic en <strong>"Examinar"</strong>.</p>
+            <img src="img/cert-05-browse.png" alt="Paso 5: Examinar almacén" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">6</div>
+          <div class="cert-step-content">
+            <p>Selecciona <strong>"Entidades de certificación raíz de confianza"</strong> y haz clic en <strong>"Aceptar"</strong>.</p>
+            <img src="img/cert-06-trusted-root.png" alt="Paso 6: Entidades raíz de confianza" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">7</div>
+          <div class="cert-step-content">
+            <p>Haz clic en <strong>"Siguiente"</strong>.</p>
+            <img src="img/cert-07-finish.png" alt="Paso 7: Siguiente" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">8</div>
+          <div class="cert-step-content">
+            <p>Finalización del Asistente para importar certificado: haga clic en <strong>"Finalizar"</strong>.</p>
+            <img src="img/cert-08-security.png" alt="Paso 8: Finalizar importación" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-step">
+          <div class="cert-step-num">9</div>
+          <div class="cert-step-content">
+            <p>Verás el mensaje <strong>"La importación se realizó correctamente"</strong>.</p>
+            <img src="img/cert-09-done.png" alt="Paso 9: Importación correcta" class="cert-step-img" />
+          </div>
+        </div>
+
+        <div class="cert-final">
+          <i class="fas fa-check-circle"></i>
+          <span>¡Listo! Cierre el navegador y vuelva a ingresar.</span>
+        </div>
       </div>
       <div class="modal-footer">
         <button id="cert-modal-ok" class="btn-primary"><i class="fas fa-check"></i> Entendido</button>
