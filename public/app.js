@@ -1703,7 +1703,7 @@ function renderAllUsers(users) {
 
 socket.on('room-message', function(msg) {
   if (msg.sender !== currentUser) playNotification();
-  renderMessage(msg);
+  if (!privateRecipient) renderMessage(msg);
 });
 
 socket.on('room-unread-update', function(data) {
