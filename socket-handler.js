@@ -648,7 +648,7 @@ module.exports = (io, db) => {
       const user = users.get(socket.id);
       if (!user) return;
 
-      io.emit('panic-alert', {
+      socket.broadcast.emit('panic-alert', {
         username: user.username,
         displayName: user.displayName || user.username,
         location: user.location || '',

@@ -740,6 +740,10 @@ logoutBtn.addEventListener('click', () => {
 });
 
 panicBtn.addEventListener('click', function() {
+  panicModalMessage.textContent = 'Has enviado una alerta de asistencia';
+  panicModalLocation.innerHTML = 'Ubicación: <strong>' + escapeHtml(currentLocation || 'Indeterminada') + '</strong>';
+  panicModalTime.textContent = formatTime(new Date().toISOString());
+  panicModalOverlay.classList.remove('hidden');
   socket.emit('panic-alert');
 });
 
